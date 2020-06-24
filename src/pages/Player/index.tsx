@@ -5,6 +5,8 @@ import { Sound } from 'expo-av/src/Audio/Sound';
 import React, { useState, useEffect, useCallback } from 'react';
 import { TouchableOpacity } from 'react-native';
 
+import { usePlaylist } from '../../hooks/Playlist';
+import { Playback } from '../Main/model/Playback';
 import {
   Container,
   Content,
@@ -24,38 +26,10 @@ import {
   ControlsContent,
 } from './styles';
 
-const playlist = [
-  {
-    name: 'Sorry',
-    author: 'Comfort Fit',
-    uri:
-      'https://s3.amazonaws.com/exp-us-standard/audio/playlist-example/Comfort_Fit_-_03_-_Sorry.mp3',
-    imageSource:
-      'https://i.scdn.co/image/ab67616d00001e02420b2459f35e0fc98bcab288',
-  },
-  {
-    name: 'All Of Me',
-    author: 'Mildred Bailey',
-    uri:
-      'https://ia800304.us.archive.org/34/items/PaulWhitemanwithMildredBailey/PaulWhitemanwithMildredBailey-AllofMe.mp3',
-    imageSource:
-      'https://i.scdn.co/image/ab67616d00001e021c40418d1c37d727e8e91b04',
-  },
-  {
-    name: 'Hamlet - Act I',
-    author: 'William Shakespeare',
-    uri:
-      'https://ia600204.us.archive.org/11/items/hamlet_0911_librivox/hamlet_act2_shakespeare.mp3',
-    imageSource:
-      'http://www.archive.org/download/LibrivoxCdCoverArt8/hamlet_1104.jpg',
-  },
-];
+const Player: React.FC = () => {
+  const songs = usePlaylist().playlist;
 
-interface PlayerProps {
-  onPress: () => void;
-}
-
-const Player: React.FC<PlayerProps> = ({ onPress }: PlayerProps) => {
+  const [playlist, setPlaylist] = useState<Playback[]>(songs);
   const [playbackInstance, setPlaybackInstance] = useState<Sound | null>(null);
   const [playbackInstancePosition, setPlaybackInstancePosition] = useState<
     number
@@ -75,6 +49,16 @@ const Player: React.FC<PlayerProps> = ({ onPress }: PlayerProps) => {
 
   const navigation = useNavigation();
 
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      if (playbackInstance) {
+        playbackInstance.stopAsync();
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, playbackInstance]);
+
   const updateScreenForLoading = useCallback(
     (_isLoading) => {
       setIsLoading(_isLoading);
@@ -88,15 +72,18 @@ const Player: React.FC<PlayerProps> = ({ onPress }: PlayerProps) => {
         setPlaybackInstanceDuration(0);
       }
     },
-    [playbackIndex],
+    [playbackIndex, playlist],
   );
 
-  const advancePlaybackIndex = useCallback((forward) => {
-    setPlaybackIndex(
-      (prevState) =>
-        (prevState + (forward ? 1 : playlist.length - 1)) % playlist.length,
-    );
-  }, []);
+  const advancePlaybackIndex = useCallback(
+    (forward) => {
+      setPlaybackIndex(
+        (prevState) =>
+          (prevState + (forward ? 1 : playlist.length - 1)) % playlist.length,
+      );
+    },
+    [playlist.length],
+  );
 
   const onPlaybackStatusUpdate = useCallback(
     (status) => {
@@ -272,9 +259,11 @@ const Player: React.FC<PlayerProps> = ({ onPress }: PlayerProps) => {
         ) : (
           <PlaybackContainer>
             <PlaybackImage
-              source={{ uri: playlist[playbackIndex].imageSource }}
+              source={{ uri: playlist[playbackIndex].image_source }}
             />
-            <PlaybackName>{playbackName}</PlaybackName>
+            <PlaybackName>
+              {playbackName} - {playlist[playbackIndex]}
+            </PlaybackName>
             <PlaybackAuthor>{playlist[playbackIndex].author}</PlaybackAuthor>
           </PlaybackContainer>
         )}

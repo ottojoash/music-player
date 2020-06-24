@@ -1,4 +1,3 @@
-import Constants from 'expo-constants';
 import { Dimensions } from 'react-native';
 import { getStatusBarHeight } from 'react-native-iphone-x-helper';
 import styled from 'styled-components/native';
@@ -7,7 +6,6 @@ const WINDOW_WIDTH = Dimensions.get('window').width;
 
 export const Container = styled.SafeAreaView`
   flex: 1;
-  background: #121212;
 `;
 
 export const Header = styled.View`

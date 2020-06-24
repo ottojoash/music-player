@@ -8,7 +8,6 @@ import { Playback } from './model/Playback';
 
 export const Container = styled.View`
   flex: 1;
-  background: #121212;
 `;
 
 export const Header = styled.View`

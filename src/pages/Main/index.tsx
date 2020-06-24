@@ -1,8 +1,8 @@
 import { useNavigation } from '@react-navigation/native';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 import MiniPlayer from '../../components/MiniPlayer';
-import mock from '../../services/playbackListMock';
+import { usePlaylist } from '../../hooks/Playlist';
 import { Playback } from './model/Playback';
 import {
   Container,
@@ -22,9 +22,12 @@ import {
 } from './styles';
 
 const Main: React.FC = () => {
-  const navigation = useNavigation();
+  const [playlist, setPlaylist] = useState<Playback[]>([]);
 
-  const playbackListMock: Playback[] = mock;
+  const navigation = useNavigation();
+  const songs = usePlaylist().playlist;
+
+  useEffect(() => setPlaylist(songs), [songs]);
 
   return (
     <>
@@ -41,7 +44,7 @@ const Main: React.FC = () => {
         </Header>
 
         <PlaybackList
-          data={playbackListMock}
+          data={playlist}
           keyExtractor={(playback) => String(playback.id)}
           ListHeaderComponent={<PlaybackListTitle>Playlist</PlaybackListTitle>}
           ItemSeparatorComponent={() => <PlaybackSeparator />}
