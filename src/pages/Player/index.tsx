@@ -27,9 +27,6 @@ import {
 } from './styles';
 
 const Player: React.FC = () => {
-  const songs = usePlaylist().playlist;
-
-  const [playlist, setPlaylist] = useState<Playback[]>(songs);
   const [playbackInstance, setPlaybackInstance] = useState<Sound | null>(null);
   const [playbackInstancePosition, setPlaybackInstancePosition] = useState<
     number
@@ -37,7 +34,6 @@ const Player: React.FC = () => {
   const [playbackInstanceDuration, setPlaybackInstanceDuration] = useState<
     number
   >(0);
-  const [playbackName, setPlaybackName] = useState('');
   const [playbackIndex, setPlaybackIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isBuffering, setBuffeing] = useState(false);
@@ -46,8 +42,10 @@ const Player: React.FC = () => {
   const [shouldPlay, setShouldPlay] = useState(false);
   const [isSeeking, setIsSeekink] = useState(false);
   const [shouldPlayAtEndOfSeek, setShouldPlayAtEndOfSeek] = useState(false);
+  const [selectedSong, setSelectedSong] = useState<Playback>({} as Playback);
 
   const navigation = useNavigation();
+  const { playlist } = usePlaylist();
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('blur', () => {
@@ -59,30 +57,25 @@ const Player: React.FC = () => {
     return unsubscribe;
   }, [navigation, playbackInstance]);
 
-  const updateScreenForLoading = useCallback(
-    (_isLoading) => {
-      setIsLoading(_isLoading);
-      setPlaybackName(
-        _isLoading ? '... loading ...' : playlist[playbackIndex].name,
-      );
+  const updateScreenForLoading = useCallback((_isLoading) => {
+    setIsLoading(_isLoading);
 
-      if (_isLoading) {
-        setIsPlaying(false);
-        setPlaybackInstancePosition(0);
-        setPlaybackInstanceDuration(0);
-      }
-    },
-    [playbackIndex, playlist],
-  );
+    if (_isLoading) {
+      setIsPlaying(false);
+      setPlaybackInstancePosition(0);
+      setPlaybackInstanceDuration(0);
+    }
+  }, []);
 
   const advancePlaybackIndex = useCallback(
     (forward) => {
-      setPlaybackIndex(
-        (prevState) =>
-          (prevState + (forward ? 1 : playlist.length - 1)) % playlist.length,
-      );
+      const nextIndex =
+        (playbackIndex + (forward ? 1 : playlist.length - 1)) % playlist.length;
+
+      setPlaybackIndex(nextIndex);
+      setSelectedSong(playlist[nextIndex]);
     },
-    [playlist.length],
+    [playbackIndex, playlist],
   );
 
   const onPlaybackStatusUpdate = useCallback(
@@ -113,7 +106,7 @@ const Player: React.FC = () => {
       setPlaybackInstance(null);
     }
 
-    const source = { uri: playlist[playbackIndex].uri };
+    const source = { uri: selectedSong.uri };
     const initialStatus = {
       shouldPlay,
       isMuted,
@@ -128,36 +121,48 @@ const Player: React.FC = () => {
     setPlaybackInstance(sound);
 
     updateScreenForLoading(false);
-  }, [playbackIndex, isMuted, shouldPlay]);
+  }, [selectedSong.uri, isMuted, shouldPlay]);
 
   useEffect(() => {
     loadNewPlaybackInstance();
   }, [loadNewPlaybackInstance]);
 
   useEffect(() => {
+    setSelectedSong(playlist[playbackIndex]);
+
     Audio.setAudioModeAsync({
       shouldDuckAndroid: true,
       interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
       staysActiveInBackground: false,
       playThroughEarpieceAndroid: false,
     });
-  }, []);
+  }, [playbackIndex, playlist]);
 
   const handleForwardButton = useCallback(() => {
     if (playbackInstance != null) {
       advancePlaybackIndex(true);
-      setShouldPlay(true);
+      setShouldPlay(isPlaying);
       updateScreenForLoading(true);
     }
-  }, [advancePlaybackIndex, playbackInstance, updateScreenForLoading]);
+  }, [
+    advancePlaybackIndex,
+    isPlaying,
+    playbackInstance,
+    updateScreenForLoading,
+  ]);
 
   const handleBackButton = useCallback(() => {
     if (playbackInstance != null) {
       advancePlaybackIndex(false);
-      setShouldPlay(true);
+      setShouldPlay(isPlaying);
       updateScreenForLoading(true);
     }
-  }, [advancePlaybackIndex, playbackInstance, updateScreenForLoading]);
+  }, [
+    advancePlaybackIndex,
+    isPlaying,
+    playbackInstance,
+    updateScreenForLoading,
+  ]);
 
   const handleTogglePlay = useCallback(() => {
     if (playbackInstance != null) {
@@ -181,16 +186,13 @@ const Player: React.FC = () => {
     return 0;
   }, [playbackInstance, playbackInstanceDuration, playbackInstancePosition]);
 
-  const handleSeekSliderValueChange = useCallback(
-    (value) => {
-      if (playbackInstance && !isSeeking) {
-        setIsSeekink(true);
-        setShouldPlayAtEndOfSeek(isPlaying);
-        playbackInstance.pauseAsync();
-      }
-    },
-    [isPlaying, isSeeking, playbackInstance],
-  );
+  const handleSeekSliderValueChange = useCallback(() => {
+    if (playbackInstance && !isSeeking) {
+      setIsSeekink(true);
+      setShouldPlayAtEndOfSeek(isPlaying);
+      playbackInstance.pauseAsync();
+    }
+  }, [isPlaying, isSeeking, playbackInstance]);
 
   const handleSeekSliderSlidingComplete = useCallback(
     async (value) => {
@@ -258,13 +260,9 @@ const Player: React.FC = () => {
           </LoadingContainer>
         ) : (
           <PlaybackContainer>
-            <PlaybackImage
-              source={{ uri: playlist[playbackIndex].image_source }}
-            />
-            <PlaybackName>
-              {playbackName} - {playlist[playbackIndex]}
-            </PlaybackName>
-            <PlaybackAuthor>{playlist[playbackIndex].author}</PlaybackAuthor>
+            <PlaybackImage source={{ uri: selectedSong.image_source }} />
+            <PlaybackName>{selectedSong.name}</PlaybackName>
+            <PlaybackAuthor>{selectedSong.author}</PlaybackAuthor>
           </PlaybackContainer>
         )}
 
