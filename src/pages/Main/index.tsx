@@ -1,5 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { TextInput, TextInputProps } from 'react-native';
 
 import MiniPlayer from '../../components/MiniPlayer';
 import { usePlaylist } from '../../hooks/Playlist';
@@ -22,12 +23,21 @@ import {
 } from './styles';
 
 const Main: React.FC = () => {
+  const [search, setSearch] = useState('');
   const [playlist, setPlaylist] = useState<Playback[]>([]);
 
   const navigation = useNavigation();
   const songs = usePlaylist().playlist;
 
   useEffect(() => setPlaylist(songs), [songs]);
+
+  const handleInputChange = useCallback((value: string) => {
+    setSearch(value);
+
+    if (value.length >= 3) {
+      console.log('call Spotify API');
+    }
+  }, []);
 
   return (
     <>
@@ -39,6 +49,8 @@ const Main: React.FC = () => {
             <SearchTextInput
               placeholder="Find your favorite artists"
               placeholderTextColor="#666360"
+              value={search}
+              onChangeText={handleInputChange}
             />
           </SearchContainer>
         </Header>
