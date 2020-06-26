@@ -1,7 +1,7 @@
 export interface Playback {
   id: number;
   name: string;
-  author: string;
+  author: string | undefined;
   uri: string;
-  image_source: string;
+  image_source: string | undefined;
 }

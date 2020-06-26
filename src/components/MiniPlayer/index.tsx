@@ -6,13 +6,15 @@ import { PlybackContainer, PlaybackName } from './styles';
 
 interface MiniPlayerProps {
   onPress: () => void;
+  disabled: boolean;
 }
 
 const MiniPlayer: React.FC<MiniPlayerProps> = ({
   onPress,
+  disabled,
 }: MiniPlayerProps) => {
   return (
-    <TouchableWithoutFeedback {...{ onPress }}>
+    <TouchableWithoutFeedback {...{ onPress, disabled }}>
       <PlybackContainer>
         <PlaybackName>Metronomy - The Bay</PlaybackName>
         <Icon name="play-circle" color="white" size={24} />

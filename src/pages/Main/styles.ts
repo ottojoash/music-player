@@ -50,6 +50,13 @@ export const PlaybackSeparator = styled.View`
   background: #272829;
 `;
 
+export const EmptyList = styled.Text`
+  color: #fff;
+  opacity: 0.6;
+  font-size: 18px;
+  font-weight: bold;
+`;
+
 export const PlaybackContainer = styled(RectButton)`
   background: #121212;
   margin-bottom: 16px;
